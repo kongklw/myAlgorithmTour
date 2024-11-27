@@ -1,0 +1,7 @@
+1.dangling image # 虚悬镜像
+    产生的原因有
+    1.docker build .  没有指定name:tag
+    2.删除image 造成了有的image 变成了dangling image
+    解决办法：
+    1.正确build
+    2.找出并删除虚悬镜像 docker images ls -f dangling=tru 查找      docker image prune

@@ -1,0 +1,73 @@
+是什么
+能干什么
+为什么学习
+能为我解决什么问题。
+操作 下载安装案例
+
+概念 实操 总结
+
+
+一致性Hash算法
+目标：解决分布式缓存数据 变动和映射问题。某个机器down机了，分母数改变了，取余不ok
+实现的三大步骤：
+    1.算法构建一致性Hash环
+    2.服务器ip节点映射
+    3.key落到服务器的落键规则。
+
+
+# 启动6个redis docker container
+[root@iZ2zea5vyne1pgm67h6ts8Z ~]# docker run -d --name redis-node-5 --net host --privileged=true -v /app/redis-cluster/share/redis-node-5:/data redis --cluster-enabled yes --appendonly yes --port 6385
+
+#进入一个redis container 命令执行 主从配置
+redis-cli --cluster create 172.21.9.142:6381 \
+172.21.9.142:6382 172.21.9.142:6383 172.21.9.142:6384 172.21.9.142:6385 172.21.9.142:6386 \
+--cluster-replicas 1
+
+# 连接集群  -c 参数 代表集群连接。
+redis-cli -p 6381 -c
+
+# 集群检查
+redis-cli --cluster check ip:port
+redis-cli --cluster check 172.21.9.142:6382
+返回结果如下.
+root@iZ2zea5vyne1pgm67h6ts8Z:/data# redis-cli --cluster check 172.21.9.142:6382
+172.21.9.142:6382 (c91482cd...) -> 0 keys | 5462 slots | 1 slaves.
+172.21.9.142:6381 (eee3cbd6...) -> 2 keys | 5461 slots | 1 slaves.
+172.21.9.142:6383 (fd2d4dcf...) -> 1 keys | 5461 slots | 1 slaves.
+[OK] 3 keys in 3 masters.
+0.00 keys per slot on average.
+>>> Performing Cluster Check (using node 172.21.9.142:6382)
+M: c91482cdab4a2ba74e7a3741def73b2d1cd078d4 172.21.9.142:6382
+   slots:[5461-10922] (5462 slots) master
+   1 additional replica(s)
+M: eee3cbd678e075c6dfe4639ce9311a2c2b35e923 172.21.9.142:6381
+   slots:[0-5460] (5461 slots) master
+   1 additional replica(s)
+S: 5546bacbcfcb0b789813e1b73a1ed869584f6aab 172.21.9.142:6386
+   slots: (0 slots) slave
+   replicates fd2d4dcffbad683401ee1e8a2f1b794b3811e3b9
+S: 6d02cd1150b117d488545406d35d0e6203595abb 172.21.9.142:6385
+   slots: (0 slots) slave
+   replicates c91482cdab4a2ba74e7a3741def73b2d1cd078d4
+S: a74878a64c8bda45ee84d586638ce01678f5308f 172.21.9.142:6384
+   slots: (0 slots) slave
+   replicates eee3cbd678e075c6dfe4639ce9311a2c2b35e923
+M: fd2d4dcffbad683401ee1e8a2f1b794b3811e3b9 172.21.9.142:6383
+   slots:[10923-16383] (5461 slots) master
+   1 additional replica(s)
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+
+
+数据读写存储
+
+容错切换迁移
+
+
+再添加主从节点到现在的集群中。（扩容）
+    需要解决的问题。1.新机器的加入方式 2.slot 的重新分配。
+
+    # redis-cli --cluster add-node 本节点地址 要加入的集群中的其中一个节点地址
+    redis-cli --cluster add-node 172.21.9.142:6387 172.21.9.142:6381
